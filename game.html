@@ -1,0 +1,361 @@
+<canvas id="cv" width="400" height="500"></canvas>
+
+<script>
+  const cObject = document.getElementById('cv');
+  const canvas = cObject.getContext('2d');
+  canvas.w = cObject.width;
+  canvas.h = cObject.height;
+
+  const emptyCellColor = 'white';
+  const cellColors = ['grey', 'yellow', 'orange', 'red', '#AAAA00', '#00AAAA', '#A000A0'];
+
+  const startX = 0;
+  const startY = 0;
+  const cellW = 100;
+  const cellH = 100;
+  const cellFontSize = 60;
+  const cellFont = `${cellFontSize}px Arial`;
+  const separator = 3;
+  const boardW = cellW * 4;
+  const boardH = cellH * 4;  
+
+  class Board {
+    constructor() {
+      this.cells = [];
+      this.score = 0;
+      let i;
+      this.length = 16;
+      for (i = 0; i < this.length; i++) {
+        this.cells.push({ value: 0 });
+      }
+      this.freeCells = this.length;
+    }
+  };
+
+  class BoardManager {
+    static addRandom(board) {
+      if (board.freeCells === 0) {
+        return false;
+      }
+      let emptyPosition = Math.floor(Math.random() * board.freeCells);
+      let value = (Math.floor(Math.random() * 2) + 1) * 2;
+      BoardManager.setValue(board, emptyPosition, value);
+      return true;
+    }
+
+    static setValue(board, position, value) {
+      let i;
+      let emptyNth = 0;
+      for (i = 0; i < board.length; i++) {
+        if (board.cells[i].value !== 0) {
+          continue;
+        }
+        if (emptyNth === position) {
+          board.cells[i].value = value;
+          board.freeCells--;
+          return;
+        }
+        emptyNth++;
+      }
+    }
+
+    static up(board) {
+      let done = false;
+      let i, j;
+      const cells = board.cells;
+      for (i = 1; i < 4; i++) {
+        for (j = 0; j < 4; j++) {
+          if (cells[i * 4 + j].value === 0) {
+            continue;
+          }
+          let top;
+          for (top = i - 1; top >= 0; top--) {
+            if (cells[top * 4 + j].value === 0) {
+              if (top === 0) {
+                cells[top * 4 + j].value = cells[i * 4 + j].value;
+                cells[i * 4 + j].value = 0;
+                done = true;
+                break;
+              }
+              continue;
+            }
+            if (cells[i * 4 + j].value === cells[top * 4 + j].value) {
+              cells[top * 4 + j].value += cells[i * 4 + j].value;
+              board.freeCells++;
+              board.score += cells[top * 4 + j].value;
+              cells[i * 4 + j].value = 0;
+              done = true;
+            } else if (top + 1 !== i) {
+              cells[(top + 1) * 4 + j].value = cells[i * 4 + j].value;
+              cells[i * 4 + j].value = 0;
+              done = true;
+            }
+            break;
+          }
+        }
+      }
+      if (done) {
+        BoardManager.addRandom(board);
+      }
+    }    
+
+    static down(board) {
+      let done = false;
+      let i, j;
+      const cells = board.cells;
+      for (i = 2; i >= 0; i--) {
+        for (j = 0; j < 4; j++) {
+          if (cells[i * 4 + j].value === 0) {
+            continue;
+          }
+          let bottom;
+          for (bottom = i + 1; bottom < 4; bottom++) {
+            if (cells[bottom * 4 + j].value === 0) {
+              if (bottom === 3) {
+                cells[bottom * 4 + j].value = cells[i * 4 + j].value;
+                cells[i * 4 + j].value = 0;
+                done = true;
+                break;
+              }
+              continue;
+            }
+            if (cells[i * 4 + j].value === cells[bottom * 4 + j].value) {
+              cells[bottom * 4 + j].value += cells[i * 4 + j].value;
+              board.freeCells++;
+              board.score += cells[bottom * 4 + j].value;
+              cells[i * 4 + j].value = 0;
+              done = true;
+            } else if (bottom - 1 !== i) {
+              cells[(bottom - 1) * 4 + j].value = cells[i * 4 + j].value;
+              cells[i * 4 + j].value = 0;
+              done = true;
+            }
+            break;
+          }
+        }
+      }
+      if (done) {
+        BoardManager.addRandom(board);
+      }
+    }    
+
+    static left(board) {
+      let done = false;
+      let i, j;
+      const cells = board.cells;
+      for (i = 0; i < 4; i++) {
+        for (j = 1; j < 4; j++) {
+          if (cells[i * 4 + j].value === 0) {
+            continue;
+          }
+          console.log(i * 4 + j);
+          let left;
+          for (left = j - 1; left >= 0; left--) {
+            if (cells[i * 4 + left].value === 0) {
+              if (left === 0) {
+                cells[i * 4 + left].value = cells[i * 4 + j].value;
+                cells[i * 4 + j].value = 0;
+                done = true;
+                break;
+              }
+              continue;
+            }
+            if (cells[i * 4 + j].value === cells[i * 4 + left].value) {
+              cells[i * 4 + left].value += cells[i * 4 + j].value;
+              board.freeCells++;
+              board.score += cells[i * 4 + left].value;
+              cells[i * 4 + j].value = 0;
+              done = true;
+            } else if (left + 1 !== j) {
+              cells[i * 4 + left + 1].value = cells[i * 4 + j].value;
+              cells[i * 4 + j].value = 0;
+              done = true;
+            }
+            break;
+          }
+        }
+      }
+      if (done) {
+        BoardManager.addRandom(board);
+      }
+    }    
+
+    static right(board) {
+      let done = false;
+      let i, j;
+      const cells = board.cells;
+      for (i = 0; i < 4; i++) {
+        for (j = 2; j >= 0; j--) {
+          if (cells[i * 4 + j].value === 0) {
+            continue;
+          }
+          console.log(i * 4 + j);
+          let right;
+          for (right = j + 1; right < 4; right++) {
+            if (cells[i * 4 + right].value === 0) {
+              if (right === 3) {
+                cells[i * 4 + right].value = cells[i * 4 + j].value;
+                cells[i * 4 + j].value = 0;
+                done = true;
+                break;
+              }
+              continue;
+            }
+            if (cells[i * 4 + j].value === cells[i * 4 + right].value) {
+              cells[i * 4 + right].value += cells[i * 4 + j].value;
+              board.freeCells++;
+              board.score += cells[i * 4 + right].value;
+              cells[i * 4 + j].value = 0;
+              done = true;
+            } else if (right - 1 !== j) {
+              cells[i * 4 + right - 1].value = cells[i * 4 + j].value;
+              cells[i * 4 + j].value = 0;
+              done = true;
+            }
+            break;
+          }
+        }
+      }
+      if (done) {
+        BoardManager.addRandom(board);
+      }
+    }    
+  };
+
+  class Renderer {
+    static getRect({ row, column }) {
+      return {
+        x: startX + row * cellW,
+        y: startY + column * cellH,
+        w: cellW,
+        h: cellH,
+      };
+    }
+
+    static getBackgroundColorOfCell(cell) {
+      if (cell.value === 0) {
+        return emptyCellColor;
+      }
+      return cellColors[Math.log2(cell.value) % cellColors.length];
+    }
+
+    static drawCellBackground(canvas, cell, rect) {
+      canvas.fillStyle = Renderer.getBackgroundColorOfCell(cell);
+      canvas.fillRect(rect.x + separator, rect.y + separator, rect.w - 2 * separator, rect.h - 2 * separator)
+    }
+
+    static drawCellText(canvas, cell, rect) {
+      if (cell.value === 0) {
+        return;
+      }
+      canvas.fillStyle = 'black';
+      canvas.font = cellFont;
+      canvas.textAlign = 'center';
+      canvas.textBaseline = "middle";
+      canvas.fillText(cell.value, rect.x + rect.w / 2, rect.y + rect.h / 2);
+    }
+
+    static drawCell(canvas, cells, i) {
+      const column = Math.floor(i / 4);
+      const row = i % 4;
+      const rect = Renderer.getRect({ row, column });
+      Renderer.drawCellBackground(canvas, cells[i], rect)
+      Renderer.drawCellText(canvas, cells[i], rect)
+    }
+
+    static drawBoard(canvas) {
+      canvas.fillStyle = 'black';
+      canvas.fillRect(startX, startY, boardW, boardH);
+    }
+
+    static drawScore(score, canvas) {
+      canvas.fillStyle = 'black';
+      canvas.font = cellFont;
+      canvas.textAlign = 'center';
+      canvas.textBaseline = "middle";
+      canvas.fillText(`score: ${score}`, startX + boardW / 2, startY + boardH + cellH / 2);
+    }
+
+    static clear(canvas) {
+      canvas.clearRect(0, 0, canvas.w, canvas.h);
+    }
+
+    static draw(board, canvas) {
+      Renderer.clear(canvas);
+      Renderer.drawBoard(canvas);
+
+      let i;
+      for (i = 0; i < board.length; i++) {
+        Renderer.drawCell(canvas, board.cells, i);
+      }
+
+      Renderer.drawScore(board.score, canvas);
+    }
+
+    static drawGameOver(canvas){
+      canvas.fillStyle = 'white';
+      canvas.globalAlpha = 0.5;
+      canvas.fillRect(startX, startY, boardW, boardH);
+      canvas.globalAlpha = 1;
+      canvas.fillStyle = 'black';
+      canvas.font = cellFont;
+      canvas.textAlign = 'center';
+      canvas.textBaseline = "middle";
+      canvas.fillText('Game Over', startX + boardW / 2, startY + boardH / 2);
+    }
+  };
+
+  class Game {
+    static start() {
+      const board = new Board();
+      BoardManager.addRandom(board);
+      BoardManager.addRandom(board);
+
+      if (document.addEventListener) {
+        document.addEventListener('keydown', event => {
+          Game.action(board, event)
+        });
+      } else {
+        document.attachEvent('onkeydown',  event => {
+          Game.action(board, event)
+        });
+      }
+
+      Renderer.draw(board, canvas);
+    }
+
+    static action(board, event) {
+      const key = event.keyCode;
+
+      switch (key) {
+      case 38:
+        BoardManager.up(board);
+        break;
+      case 40:
+        BoardManager.down(board);
+        break;
+      case 37:
+        BoardManager.left(board);
+        break;
+      case 39:
+        BoardManager.right(board);
+        break;
+      default:
+        return;
+      }
+
+      Renderer.draw(board, canvas);
+
+      if (board.freeCells === 0) {
+        Game.over(canvas);
+      }
+    }
+
+    static over(canvas) {
+      Renderer.drawGameOver(canvas);
+    }
+  };
+
+  Game.start();
+</script>
+
